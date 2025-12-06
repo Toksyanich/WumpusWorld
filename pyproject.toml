@@ -1,0 +1,14 @@
+[project]
+name = "vantus"
+version = "0.1.0"
+description = "Logic-Agent for Vantus gaming"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "sympy>=1.14.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.17.0",
+]

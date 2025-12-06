@@ -1,12 +1,6 @@
 Сохрани этот текст в файл README.md в корне проекта.
 🏹 Wumpus World: Knowledge-Based Agent
-![alt text](https://img.shields.io/badge/Python-3.13-blue?logo=python)
-
-![alt text](https://img.shields.io/badge/Library-SymPy-green)
-
-![alt text](https://img.shields.io/badge/GUI-Tkinter-orange)
-
-![alt text](https://img.shields.io/badge/Package_Manager-uv-purple)
+![alt text](https://img.shields.io/badge/Python-3.13-blue?logo=python)   ![alt text](https://img.shields.io/badge/Library-SymPy-green)   ![alt text](https://img.shields.io/badge/GUI-Tkinter-orange)   ![alt text](https://img.shields.io/badge/Package_Manager-uv-purple)
 Реализация классической задачи искусственного интеллекта «Мир Вампуса» (Wumpus World).
 Агент исследует пещеру, избегает смертельных ловушек и охотится за золотом, используя Пропозициональную логику и Метод резолюций для принятия решений.
 📸 Скриншоты

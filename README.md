@@ -41,7 +41,7 @@
 ### Вариант 1. Запуск из исходников
 
 ```bash
-git clone https://github.com/ВАШ_НИК/WumpusWorld.git
+git clone https://github.com/Toksyanich/WumpusWorld.git
 cd WumpusWorld
 uv sync
 uv run python grafics.py

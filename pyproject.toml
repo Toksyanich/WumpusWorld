@@ -5,6 +5,7 @@ description = "Logic-Agent for Vantus gaming"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "pillow>=12.0.0",
     "sympy>=1.14.0",
 ]
 

@@ -142,7 +142,7 @@ class Agent:
         # Сам не додумался, но формула и теории задач о блуждании интересная( не зря в Т-банк пробовал решить её)
         # Но это тоже мусор, так как у нас игра, а не теор вер
         self.max_stuck_count = 3*(x*y)**0.5
-        print('asdddddddd', self.max_stuck_count)
+        self.kb_processed_cells = set()  # Все клетки, которые посетили
 
     def get_symbol(self, name, x, y):
         return sp.Symbol(f"{name}_{x}_{y}")
@@ -198,42 +198,46 @@ class Agent:
             print("Победа, ЗОЛОТО НАЙДЕНО!")
             return False
 
-        self.tell_kb(sp.Not(self.get_symbol("pit", self.x, self.y)))
-        self.tell_kb(sp.Not(self.get_symbol("vantus", self.x, self.y)))
-
         neighbors = self.get_neighbors(self.x, self.y)
         pit_neighbors = [self.get_symbol("pit", i, j) for i, j in neighbors]
 
-        # wind <=> (p_n1|p_n2 ...)
-        wind_rule = sp.Equivalent(
-            self.get_symbol("wind", self.x, self.y),
-            sp.Or(*pit_neighbors)
-        )
-        self.tell_kb(wind_rule)
+        # Факты + правила только в новых клетках, убрали дубли
+        if (self.x, self.y) not in self.kb_processed_cells:
+            self.tell_kb(sp.Not(self.get_symbol("pit", self.x, self.y)))
+            self.tell_kb(sp.Not(self.get_symbol("vantus", self.x, self.y)))
 
-        if "wind" in current_feelings:
-            print("-> Тут дует ветер! Добавляю факт")
-            self.tell_kb(self.get_symbol("wind", self.x, self.y))
-        else:
-            self.tell_kb(sp.Not(self.get_symbol("wind", self.x, self.y)))
+            # wind <=> (p_n1|p_n2 ...)
+            wind_rule = sp.Equivalent(
+                self.get_symbol("wind", self.x, self.y),
+                sp.Or(*pit_neighbors)
+            )
+            self.tell_kb(wind_rule)
 
-        # stink
-        vantus_neighbors = [self.get_symbol(
-            "vantus", i, j) for i, j in neighbors]
-        stink_rule = sp.Equivalent(
-            self.get_symbol("stink", self.x, self.y),
-            sp.Or(*vantus_neighbors)
-        )
-        self.tell_kb(stink_rule)
+            if "wind" in current_feelings:
+                print("-> Тут дует ветер! Добавляю факт")
+                self.tell_kb(self.get_symbol("wind", self.x, self.y))
+            else:
+                self.tell_kb(sp.Not(self.get_symbol("wind", self.x, self.y)))
 
-        if "stink" in current_feelings:
-            print("-> Тут воняет! Добавляю факт")
-            self.tell_kb(self.get_symbol("stink", self.x, self.y))
-        else:
-            self.tell_kb(sp.Not(self.get_symbol("stink", self.x, self.y)))
+            # stink
+            vantus_neighbors = [self.get_symbol(
+                "vantus", i, j) for i, j in neighbors]
+            stink_rule = sp.Equivalent(
+                self.get_symbol("stink", self.x, self.y),
+                sp.Or(*vantus_neighbors)
+            )
+            self.tell_kb(stink_rule)
+
+            if "stink" in current_feelings:
+                print("-> Тут воняет! Добавляю факт")
+                self.tell_kb(self.get_symbol("stink", self.x, self.y))
+            else:
+                self.tell_kb(sp.Not(self.get_symbol("stink", self.x, self.y)))
+            self.kb_processed_cells.add((self.x, self.y))
+
         print("Думаю...")
         safe_moves = []
-        for i, j in neighbors:  # спрашиваем нас не убьет?)
+        for i, j in neighbors:  # спрашиваем, нас не убьет?)
             if self.ask_kb_is_safe(i, j):
                 safe_moves.append((i, j))
 
@@ -274,9 +278,9 @@ class Agent:
                     print(f"!!! РИСКУЮ !!! Иду наугад по соседям: {next_move}")
         # логика сборса поумнее:
         # если мы шагнули в клетку, где еще не были — агент успокаивается.
+        print(self.knowledge_base)
         if next_move not in self.visited:
             self.stuck_count = 0
-
         # Делаем ход
         self.x, self.y = next_move
         self.visited.add((self.x, self.y))
@@ -289,9 +293,9 @@ class Agent:
         while steps < steps_limit:
             steps += 1
             result = self.step()
-            print("\n")
-            print(f"база знаний: {self.knowledge_base}")
-            print("\n")
+            # print("\n")
+            # print(f"база знаний: {self.knowledge_base}")
+            # print("\n")
 
             if result is False:
                 print("Игра окончена!")

@@ -65,7 +65,7 @@ S
 2. Распакуйте и запустите `WumpusWorld.exe`.
 3. Python устанавливать не нужно.
 
-4. Если вы хотите сами собрать `exe`. `.exe` будет лежать в папке `dist`.
+4. Если вы хотите сами собрать `exe`, Используйте команду ниже.
 
 ```bash
 uv run pyinstaller --noconsole --onefile --add-data "icons;icons" --name WumpusGame grafics.py

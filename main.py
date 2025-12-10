@@ -2,17 +2,6 @@ import sympy as sp
 import random
 import time
 
-description_cells = {
-    "empty_cell": 0,
-    "pit": -1,
-    "vantus": -10,
-    "wind": -2,
-    "stink": -11,
-    "agent": 100,
-    "shine": 9999,
-    "gold": 9999
-}
-
 
 class WampusWorld:
     def __init__(self, x, y, probability_of_pit):
@@ -21,99 +10,111 @@ class WampusWorld:
         self.x = x
         self.y = y
         self.probability_of_pit = probability_of_pit
-        self.description_cells = description_cells
         self.world = self.generation_world(x, y, probability_of_pit)
 
     def get_world(self):
         return self.world
 
     def generation_world(self, x, y, probability_of_pit):
-        self.world = [[[] for _ in range(self.x+2)] for _ in range(self.y+2)]
+        max_attempts = 1000  # Защита от зависания
+        attempt = 0
+        final_world = []
 
-        self.y = self.y + 1
-        self.x = self.x + 1
+        while attempt < max_attempts:
+            attempt += 1
 
-        # Генерация ЯМ (Pits)
-        for i in range(1, self.x):
-            for j in range(1, self.y):
-                if (i != 1 or j != 1) and (random.random() < self.probability_of_pit):
-                    if "pit" not in self.world[i][j]:
-                        self.world[i][j].append("pit")
+            gen_x = self.x + 1
+            gen_y = self.y + 1
 
-                    if "wind" not in self.world[i][j+1]:
-                        self.world[i][j+1].append("wind")
+            temp_world = [[[] for _ in range(gen_x + 1)]
+                          for _ in range(gen_y + 1)]
 
-                    if "wind" not in self.world[i][j-1]:
-                        self.world[i][j-1].append("wind")
+            # Генерация ЯМ (Pits)
+            for i in range(1, gen_x):
+                for j in range(1, gen_y):
+                    if (i != 1 or j != 1) and (random.random() < self.probability_of_pit):
+                        if "pit" not in temp_world[i][j]:
+                            temp_world[i][j].append("pit")
 
-                    if "wind" not in self.world[i+1][j]:
-                        self.world[i+1][j].append("wind")
+                        if "wind" not in temp_world[i][j+1]:
+                            temp_world[i][j+1].append("wind")
 
-                    if "wind" not in self.world[i-1][j]:
-                        self.world[i-1][j].append("wind")
+                        if "wind" not in temp_world[i][j-1]:
+                            temp_world[i][j-1].append("wind")
 
-        # Генерация ВАНТУСА (Vantus)
-        temp_mass = []
-        for i in range(1, self.x):
-            for j in range(1, self.y):
-                if ("pit" not in self.world[i][j]) and (i != 1 or j != 1):
-                    temp_mass.append((j*3+i*2, i, j))
+                        if "wind" not in temp_world[i+1][j]:
+                            temp_world[i+1][j].append("wind")
 
-        target = random.randint(
-            min(x[0] for x in temp_mass), max(x[0] for x in temp_mass))
-        indexs = min(temp_mass, key=lambda x: (abs(x[0] - target), -x[0]))
+                        if "wind" not in temp_world[i-1][j]:
+                            temp_world[i-1][j].append("wind")
 
-        # Ставим Вантуса
-        self.world[indexs[1]][indexs[2]].append("vantus")
+            # Генерация ВАНТУСА (Vantus)
+            temp_mass = []
+            for i in range(1, gen_x):
+                for j in range(1, gen_y):
+                    if ("pit" not in temp_world[i][j]) and (i != 1 or j != 1):
+                        temp_mass.append((j*3+i*2, i, j))
 
-        # Добавляем вонь (stink) соседям
+            target = random.randint(
+                min(x[0] for x in temp_mass), max(x[0] for x in temp_mass))
+            indexs = min(temp_mass, key=lambda x: (abs(x[0] - target), -x[0]))
 
-        if "stink" not in self.world[indexs[1]][indexs[2]+1]:
-            self.world[indexs[1]][indexs[2]+1].append("stink")
+            # Ставим Вантуса
+            temp_world[indexs[1]][indexs[2]].append("vantus")
 
-        if "stink" not in self.world[indexs[1]][indexs[2]-1]:
-            self.world[indexs[1]][indexs[2]-1].append("stink")
+            # Добавляем вонь (stink) соседям
+            if "stink" not in temp_world[indexs[1]][indexs[2]+1]:
+                temp_world[indexs[1]][indexs[2]+1].append("stink")
 
-        if "stink" not in self.world[indexs[1]+1][indexs[2]]:
-            self.world[indexs[1]+1][indexs[2]].append("stink")
+            if "stink" not in temp_world[indexs[1]][indexs[2]-1]:
+                temp_world[indexs[1]][indexs[2]-1].append("stink")
 
-        if "stink" not in self.world[indexs[1]-1][indexs[2]]:
-            self.world[indexs[1]-1][indexs[2]].append("stink")
+            if "stink" not in temp_world[indexs[1]+1][indexs[2]]:
+                temp_world[indexs[1]+1][indexs[2]].append("stink")
 
-        # Генерация ИГРОКА (agent)
-        self.world[1][1].append("agent")
+            if "stink" not in temp_world[indexs[1]-1][indexs[2]]:
+                temp_world[indexs[1]-1][indexs[2]].append("stink")
 
-        # Генерация ЗОЛОТА (Gold)
-        temp_mass = []
-        for i in range(1, self.x):
-            for j in range(1, self.y):
-                if ("pit" not in self.world[i][j]) and \
-                    (i != 1 or j != 1) and \
-                        ("vantus" not in self.world[i][j]):
-                    temp_mass.append((j*3+i*2, i, j))
+            # Генерация ИГРОКА (agent)
+            temp_world[1][1].append("agent")
 
-        target = random.randint(
-            min(x[0] for x in temp_mass), max(x[0] for x in temp_mass))
-        indexs = min(temp_mass, key=lambda x: (abs(x[0] - target), -x[0]))
+            # Генерация ЗОЛОТА (Gold)
+            temp_mass = []
+            for i in range(1, gen_x):
+                for j in range(1, gen_y):
+                    if ("pit" not in temp_world[i][j]) and \
+                        (i != 1 or j != 1) and \
+                            ("vantus" not in temp_world[i][j]):
+                        temp_mass.append((j*3+i*2, i, j))
 
-        # Ставим золото
-        self.world[indexs[1]][indexs[2]].append("gold")
-        self.world[indexs[1]][indexs[2]].append("shine")
+            if not temp_mass:
+                temp_mass.append((0, 2, 2))
 
-        print('\n')
-        for row in self.world:
-            print(row)
-        self.world_replication = [
-            [[] for _ in range(self.x-1)] for _ in range(self.y-1)]
-        print('\n')
-        for i in range(0, self.x-1):
-            for j in range(0, self.y-1):
-                self.world_replication[i][j] = self.world[i+1][j+1]
-        for row in self.world_replication:
-            print(row)
-        self.world = self.world_replication
+            target = random.randint(
+                min(x[0] for x in temp_mass), max(x[0] for x in temp_mass))
+            indexs = min(temp_mass, key=lambda x: (abs(x[0] - target), -x[0]))
 
-        return self.world
+            # Ставим золото
+            temp_world[indexs[1]][indexs[2]].append("gold")
+            temp_world[indexs[1]][indexs[2]].append("shine")
+
+            # Обрезка мира
+            cropped_world = [[[]
+                              for _ in range(self.x)] for _ in range(self.y)]
+            for i in range(0, self.x):
+                for j in range(0, self.y):
+                    cropped_world[i][j] = temp_world[i+1][j+1]
+
+            # Проверка на проходимость
+            if self.check_solvability(cropped_world, 0, 0):
+                print('\nСгенерированный мир:')
+                for row in cropped_world:
+                    print(row)
+                return cropped_world
+            final_world = cropped_world
+
+        print("\nНе удалось создать гарантированно проходимый мир. Возвращаем последний вариант.")
+        return final_world
 
     def get_percepts(self, x, y):
         real_cell = self.world[x][y]
@@ -127,6 +128,42 @@ class WampusWorld:
             percepts.append("shine")
         return percepts
 
+    def check_solvability(self, grid, start_x, start_y):
+        """
+        Проверяет, есть ли безопасный путь от (start_x, start_y) до Золота.
+        Использует BFS.
+        """
+        rows = len(grid)
+        cols = len(grid[0])
+
+        queue = [(start_x, start_y)]
+        visited = set()
+        visited.add((start_x, start_y))
+
+        while queue:
+            cx, cy = queue.pop(0)
+            cell = grid[cx][cy]
+
+            # Если нашли золото - карта проходима!
+            if "gold" in cell:
+                return True
+
+            # Проверяем соседей
+            deltas = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            for dx, dy in deltas:
+                nx, ny = cx + dx, cy + dy
+
+                # Проверка границ
+                if 0 <= nx < rows and 0 <= ny < cols:
+                    if (nx, ny) not in visited:
+                        neighbor_cell = grid[nx][ny]
+
+                        # Путь существует, только если в клетке НЕТ Ямы и НЕТ Вантуса
+                        if "pit" not in neighbor_cell and "vantus" not in neighbor_cell:
+                            visited.add((nx, ny))
+                            queue.append((nx, ny))
+        return False  # Пути нет
+
 
 class Agent:
     def __init__(self, world_object, start_x, start_y, x, y):
@@ -139,10 +176,10 @@ class Agent:
         self.visited = set()  # Где был
         self.visited.add((start_x, start_y))
         self.stuck_count = 0
-        # Сам не додумался, но формула и теории задач о блуждании интересная( не зря в Т-банк пробовал решить её)
-        # Но это тоже мусор, так как у нас игра, а не теор вер
-        self.max_stuck_count = 3*(x*y)**0.5
         self.kb_processed_cells = set()  # Все клетки, которые посетили
+        # Для расчета точного ям и вантуса
+        self.confirmed_pits = set()
+        self.confirmed_wumpus = set()
 
     def get_symbol(self, name, x, y):
         return sp.Symbol(f"{name}_{x}_{y}")
@@ -165,6 +202,23 @@ class Agent:
             return False
 
         return True
+
+    def ask_kb_is_confirmed(self, target_x, target_y, danger_type):
+        """
+        Проверяет, гарантировано ли наличие угрозы (pit/vantus) в клетке.
+        """
+        # Берем символ (pit_x_y или vantus_x_y)
+        danger_sym = self.get_symbol(danger_type, target_x, target_y)
+
+        full_kb = sp.And(*self.knowledge_base)
+
+        # Делаем предположение, что угрозы НЕТ (Not danger)
+        assumption = full_kb & sp.Not(danger_sym)
+
+        if not sp.satisfiable(assumption):
+            return True
+
+        return False  # Иначе угрозы нет.
 
     def get_neighbors(self, x, y):
 
@@ -235,9 +289,30 @@ class Agent:
                 self.tell_kb(sp.Not(self.get_symbol("stink", self.x, self.y)))
             self.kb_processed_cells.add((self.x, self.y))
 
+        # Поиск точных угроз
+        for nx, ny in neighbors:
+            # 1. Проверка ЯМЫ
+            if (nx, ny) not in self.confirmed_pits and (nx, ny) not in self.visited:
+                if self.ask_kb_is_confirmed(nx, ny, "pit"):
+                    print(f"!!! ЭВРИКА! В ({nx}, {ny}) 100% ЯМА! Запоминаю...")
+                    self.confirmed_pits.add((nx, ny))
+                    self.tell_kb(self.get_symbol("pit", nx, ny))
+
+            # 2. Проверка ВАНТУСА
+            if (nx, ny) not in self.confirmed_wumpus and (nx, ny) not in self.visited:
+                if self.ask_kb_is_confirmed(nx, ny, "vantus"):
+                    print(
+                        f"!!! ЭВРИКА! В ({nx}, {ny}) 100% ВАНТУС! Запоминаю...")
+                    self.confirmed_wumpus.add((nx, ny))
+                    self.tell_kb(self.get_symbol("vantus", nx, ny))
+
         print("Думаю...")
         safe_moves = []
-        for i, j in neighbors:  # спрашиваем, нас не убьет?)
+        for i, j in neighbors:
+            # Сначала проверяем: не является ли эта клетка уже доказанной смертью?
+            if (i, j) in self.confirmed_pits or (i, j) in self.confirmed_wumpus:
+                continue  # пропускаем
+            # 2. Безопасно ли там?
             if self.ask_kb_is_safe(i, j):
                 safe_moves.append((i, j))
 
@@ -260,22 +335,23 @@ class Agent:
             print(
                 f"Новых безопасных нет, иду назад ({self.stuck_count}/{self.max_stuck_count}): {next_move}")
         else:
-            if self.stuck_count >= self.max_stuck_count:
-                print("Я застрял в безопасном круге! ПРИДЕТСЯ РИСКОВАТЬ!")
-            if random.random() < 0.01:
-                print("Нервы сдали. Агент сделал харакири!")
-                return False
+            print("Безопасных нет! Придется рисковать...")
+            valid_risk_neighbors = [
+                n for n in neighbors
+                if n not in self.confirmed_pits and n not in self.confirmed_wumpus
+            ]
+            risky_unvisited = [
+                n for n in valid_risk_neighbors if n not in self.visited]
+            if risky_unvisited:
+                next_move = random.choice(risky_unvisited)
+                print(f"!!!Кто не рисукет... Иду в неизвестность: {next_move}")
+            elif valid_risk_neighbors:  # Если есть хоть куда пойти (не в яму)
+                next_move = random.choice(valid_risk_neighbors)
+                print(
+                    f"!!! РИСКУЮ !!! Иду наугад по соседям (но не в яму): {next_move}")
             else:
-                print("Безопасных нет! Придется рисковать...")
-                risky_unvisited = [
-                    n for n in neighbors if n not in self.visited]
-                if risky_unvisited:
-                    next_move = random.choice(risky_unvisited)
-                    print(
-                        f"!!!Кто не рисукет, тот не открывает сезон в Шерегеше с Егермейстером!!! Иду в неизвестность: {next_move}")
-                else:
-                    next_move = random.choice(neighbors)
-                    print(f"!!! РИСКУЮ !!! Иду наугад по соседям: {next_move}")
+                print("Я окружен доказанными смертями! Выхода нет.")
+                return False  # Вот тут реальный конец игры без шансов
         # логика сборса поумнее:
         # если мы шагнули в клетку, где еще не были — агент успокаивается.
         print(self.knowledge_base)

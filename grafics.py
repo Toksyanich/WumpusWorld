@@ -58,7 +58,7 @@ class MainMenu(tk.Frame):
         self.cols_entry = self.create_input(
             settings_frame, "Ширина (Cols):", "5")
         self.prob_entry = self.create_input(
-            settings_frame, "Шанс ямы (0.0 - 1.0):", "0.2")
+            settings_frame, "Шанс ямы (0.0 - 1.0):", "0.13")
 
         tk.Button(self, text="НАЧАТЬ ИГРУ", font=("Arial", 16), bg="#4CAF50", fg="white",
                   command=self.validate_and_start, width=20, height=2).pack(pady=40)

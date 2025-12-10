@@ -79,8 +79,9 @@ class MainMenu(tk.Frame):
             cols = int(self.cols_entry.get())
             prob = float(self.prob_entry.get())
 
-            if rows < 3 or cols < 3:
-                messagebox.showerror("Ошибка", "Минимальный размер карты 3x3")
+            if (rows < 3 or cols < 3) or (rows > 30 or cols > 30):
+                messagebox.showerror(
+                    "Ошибка", "Минимальный размер карты 3x3\nМаксимальный размер карты 30x30 ")
                 return
             if not (0 <= prob <= 1.0):
                 messagebox.showerror(

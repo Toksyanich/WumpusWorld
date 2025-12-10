@@ -60,7 +60,6 @@ uv run python grafics.py
 ```
 
 ### Вариант 2. Готовый .exe (Windows)
-S
 1. Скачайте архив из раздела Releases.
 2. Распакуйте и запустите `WumpusWorld.exe`.
 3. Python устанавливать не нужно.
